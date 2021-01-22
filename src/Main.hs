@@ -9,9 +9,20 @@ import Parser
 import Whatsapp
 import Html
 
+specialChars = ['\160', '\8234', '\8236', '\8206']
+
+removeSpecialChars :: String -> String
+removeSpecialChars = filter $ not . (flip elem) specialChars
 
 process :: String -> String -> String
-process log phonebook = generateHTML $ map snd $ catMaybes $ map (runParser parseMessage) $ lines log
+process log phonebook
+  = generateHTML (parsePhonebook phonebook)
+  $ map snd
+  $ catMaybes
+  $ map (runParser parseMessage)
+  $ lines
+  $ removeSpecialChars
+  $ log
 
 main :: IO ()
 main = do

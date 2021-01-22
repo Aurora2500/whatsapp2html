@@ -85,7 +85,7 @@ parseDateTime = do
     return (date, time)
 
 parsePhoneNumber :: Parser PhoneNumber
-parsePhoneNumber = takeP 16
+parsePhoneNumber = takeP 12
 
 parseVideo :: Parser String -> Parser (FileType, String)
 parseVideo pr = do
@@ -122,18 +122,15 @@ parseContent = (fmap ContentFile parseFile) <|> (fmap ContentMessage allP)
 
 -- names
 
-parsePhonebookLine :: String -> Maybe PhonebookLine
-parsePhonebookLine line = fmap snd $ runParser p line
-    where
-        p :: Parser PhonebookLine
-        p = do
-            phoneNumber <- parsePhoneNumber
-            stringP ","
-            name <- allP
-            return (phoneNumber, name)
+parsePhonebookLine :: Parser PhonebookLine
+parsePhonebookLine = do
+            phoneNumber <- spanP (/= ',')
+            stringP ", "
+            name <- spanP (/= ',')
+            return (filter (not . isSpace) phoneNumber, name)
 
 parsePhonebook :: String -> Phonebook
-parsePhonebook = fromList . catMaybes . (map parsePhonebookLine) . lines
+parsePhonebook = fromList . catMaybes . (map $ fmap snd . runParser parsePhonebookLine) . lines
 
 getName:: Phonebook -> PhoneNumber -> Maybe Name
 getName = flip Map.lookup
